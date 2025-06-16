@@ -7,11 +7,10 @@ import { ApiKeyModel } from '../database';
 export * from './ApiKeys';
 export * from './Mods';
 
-
 export async function validateApiKey(req: Request, res: Response, next: NextFunction) {
     const { mod } = req.params;
     
-    const apiKey = req.headers.authorization?.split(' ')[1];
+    const apiKey: string = req.headers['apikey'] as any;
     if (!validateUUID(apiKey)) throw new ExpressError(401, 'API Key not provided');
     else if (MASTER_KEY?.toLowerCase() == apiKey.toLowerCase()) return next();
 
@@ -23,7 +22,7 @@ export async function validateApiKey(req: Request, res: Response, next: NextFunc
 }
 
 export async function validateMasterApiKey(req: Request, res: Response, next: NextFunction) {
-    const apiKey = req.headers.authorization?.split(' ')[1];
+    const apiKey: string = req.headers['apikey'] as any;
     if (!validateUUID(apiKey)) throw new ExpressError(401, 'API Key not provided');
     else if (MASTER_KEY?.toLowerCase() != apiKey.toLowerCase()) throw new ExpressError(403, 'Unauthorized');
     next();
