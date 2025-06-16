@@ -1,7 +1,7 @@
 import { ApiKey, ExpressError } from '../types';
 import { ApiKeyModel } from '../database';
 import { MASTER_KEY } from '../constants';
-import { NextFunction, Request, Response } from 'express';
+import { NextFunction, Request, RequestHandler, Response } from 'express';
 import { validate as validateUUID } from 'uuid';
 const asyncHandler = require("express-async-handler");
 
@@ -28,3 +28,10 @@ export const validateMasterApiKey = asyncHandler(async function (req: Request, r
     else if (MASTER_KEY?.toLowerCase() != apiKey.toLowerCase()) throw new ExpressError(403, 'Unauthorized');
     next();
 });
+
+export function asyncRoute(handler: RequestHandler) {
+    return (req: Request, res: Response, next: NextFunction) => {
+        // Weird catch system... :/
+        Promise.resolve(handler(req, res, next)).catch(e => next(e));
+    }
+}

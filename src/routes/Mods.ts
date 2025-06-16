@@ -4,8 +4,7 @@ import { ModModel } from "../database";
 import { NextFunction, Request, Response, Router } from "express";
 import { posix } from "path";
 import { URL } from "url";
-import { validateApiKey } from ".";
-const asyncHandler = require("express-async-handler");
+import { validateApiKey, asyncRoute } from ".";
 
 const cache = new ExpirableMap<string, Map<String, Cache>>();
 
@@ -16,11 +15,11 @@ modRoute.get('/', async (req: Request, res: Response) => {
     res.json(mods);
 });
 
-modRoute.get('/:mod/index.json', asyncHandler(async (req: Request, res: Response) => {
+modRoute.get('/:mod/index.json', asyncRoute(async (req: Request, res: Response) => {
     getAsset(req, res, false);
 }));
 
-modRoute.get('/:mod', asyncHandler(async (req: Request, res: Response) => {
+modRoute.get('/:mod', asyncRoute(async (req: Request, res: Response) => {
     const { mod: modID } = req.params;
     const mod: Mod = await ModModel.findOne({ modID });
 
@@ -28,12 +27,12 @@ modRoute.get('/:mod', asyncHandler(async (req: Request, res: Response) => {
     res.json(mod);
 }));
 
-modRoute.use('/:mod/', asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
+modRoute.use('/:mod/', asyncRoute(async (req: Request, res: Response, next: NextFunction) => {
     if (req.method != 'GET') return next();
     getAsset(req, res, true);
 }));
 
-modRoute.delete('/:mod', validateApiKey, asyncHandler(async (req: Request, res: Response) => {
+modRoute.delete('/:mod', validateApiKey, asyncRoute(async (req: Request, res: Response) => {
     const { mod: modID } = req.params;
     const mod: Mod = await ModModel.findOneAndDelete({ modID });
 
@@ -41,7 +40,7 @@ modRoute.delete('/:mod', validateApiKey, asyncHandler(async (req: Request, res: 
     res.json({ status: "200", message: `Successfully deleted mod "${modID}"` })
 }));
 
-modRoute.post('/add', validateApiKey, asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
+modRoute.post('/add', validateApiKey, asyncRoute(async (req: Request, res: Response, next: NextFunction) => {
     const { modID, name, assetsURL } = req.body;
 
     const mod = await ModModel.create({ modID, name, assetsURL }).catch(err => null);
@@ -49,7 +48,7 @@ modRoute.post('/add', validateApiKey, asyncHandler(async (req: Request, res: Res
     res.json({ status: "200", message: "Successfully added mod" });
 }));
 
-modRoute.post('/:mod/edit', validateApiKey, asyncHandler(async (req: Request, res: Response) => {
+modRoute.post('/:mod/edit', validateApiKey, asyncRoute(async (req: Request, res: Response) => {
     const { mod } = req.params;
     const { modID, name, assetsURL } = req.body;
 
