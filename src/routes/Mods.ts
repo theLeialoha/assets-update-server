@@ -16,7 +16,7 @@ modRoute.get('/', async (req: Request, res: Response) => {
 });
 
 modRoute.get('/:mod/index.json', asyncRoute(async (req: Request, res: Response) => {
-    getAsset(req, res, false);
+    await getAsset(req, res, false);
 }));
 
 modRoute.get('/:mod', asyncRoute(async (req: Request, res: Response) => {
@@ -29,7 +29,7 @@ modRoute.get('/:mod', asyncRoute(async (req: Request, res: Response) => {
 
 modRoute.use('/:mod/', asyncRoute(async (req: Request, res: Response, next: NextFunction) => {
     if (req.method != 'GET') return next();
-    getAsset(req, res, true);
+    await getAsset(req, res, true);
 }));
 
 modRoute.delete('/:mod', validateApiKey, asyncRoute(async (req: Request, res: Response) => {
