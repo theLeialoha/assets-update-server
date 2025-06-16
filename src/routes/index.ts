@@ -13,7 +13,7 @@ export async function validateApiKey(req: Request, res: Response, next: NextFunc
     
     const apiKey = req.headers.authorization?.split(' ')[1];
     if (!validateUUID(apiKey)) throw new ExpressError(401, 'API Key not provided');
-    else if (MASTER_KEY.toLowerCase() == apiKey.toLowerCase()) return next();
+    else if (MASTER_KEY?.toLowerCase() == apiKey.toLowerCase()) return next();
 
     const result: ApiKey = await ApiKeyModel.findOne({ apiKey });
 
@@ -25,6 +25,6 @@ export async function validateApiKey(req: Request, res: Response, next: NextFunc
 export async function validateMasterApiKey(req: Request, res: Response, next: NextFunction) {
     const apiKey = req.headers.authorization?.split(' ')[1];
     if (!validateUUID(apiKey)) throw new ExpressError(401, 'API Key not provided');
-    else if (MASTER_KEY.toLowerCase() != apiKey.toLowerCase()) throw new ExpressError(403, 'Unauthorized');
+    else if (MASTER_KEY?.toLowerCase() != apiKey.toLowerCase()) throw new ExpressError(403, 'Unauthorized');
     next();
 }
