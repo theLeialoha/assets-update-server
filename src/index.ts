@@ -1,5 +1,6 @@
 // index.ts
 import { NextFunction, Request, Response } from 'express';
+import 'express-async-errors';
 import * as express from 'express';
 import { resolve } from 'path';
 
