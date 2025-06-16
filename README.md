@@ -32,7 +32,7 @@ A server for Minecraft modders that manages all your assets.
 
 ```json5
 {
-  "id": "examplemod",
+  "modID": "examplemod",
   // The mod ID (used to identify the mod)
   "name": "Example Mod",
   // The name of the mod

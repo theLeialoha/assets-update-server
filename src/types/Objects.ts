@@ -6,7 +6,7 @@ export type ApiKey = {
 } & GenericMongoEntry
 
 export type Mod = {
-    id: string;
+    modID: string;
     name: string;
     assetsURL?: string;
 } & GenericMongoEntry;

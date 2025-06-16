@@ -11,9 +11,12 @@ apiKeyRoute.get('/', validateMasterApiKey, async (req: Request, res: Response) =
 });
 
 apiKeyRoute.post('/add', validateMasterApiKey, async (req: Request, res: Response) => {
-    const { mods } = req.body;
+    let { mods } = req.body;
     if (!Array.isArray(mods) || mods.length == 0)
         throw new ExpressError(400, 'Field "mods" in body, must be an array and not empty');
+
+    // Make sure every mod id is lowercase
+    mods = mods.map(mod => mod.toLowerCase());
 
     const key: ApiKey = await ApiKeyModel.create({ mods }).catch(err => null);
     if (key == null) throw new ExpressError(500, 'Error whilst creating API key');

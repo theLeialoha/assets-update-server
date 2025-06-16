@@ -20,8 +20,8 @@ modRoute.get('/:mod/index.json', async (req: Request, res: Response) => {
 });
 
 modRoute.get('/:mod', async (req: Request, res: Response) => {
-    const { mod: id } = req.params;
-    const mod: Mod = await ModModel.findOne({ id });
+    const { mod: modID } = req.params;
+    const mod: Mod = await ModModel.findOne({ modID });
 
     if (mod == null) throw new ExpressError(404, 'Mod does not exist');
     res.json(mod);
@@ -33,29 +33,29 @@ modRoute.use('/:mod/', async (req: Request, res: Response, next: NextFunction) =
 });
 
 modRoute.delete('/:mod', validateApiKey, async (req: Request, res: Response) => {
-    const { mod: id } = req.params;
-    const mod: Mod = await ModModel.findOneAndDelete({ id });
+    const { mod: modID } = req.params;
+    const mod: Mod = await ModModel.findOneAndDelete({ modID });
 
     if (mod == null) throw new ExpressError(404, 'Mod does not exist');
-    res.json({ status: "200", message: `Successfully deleted mod "${id}"` })
+    res.json({ status: "200", message: `Successfully deleted mod "${modID}"` })
 });
 
 modRoute.post('/add', validateApiKey, async (req: Request, res: Response, next: NextFunction) => {
-    const { id, name, assetsURL } = req.body;
+    const { modID, name, assetsURL } = req.body;
 
-    const mod = await ModModel.create({ id, name, assetsURL }).catch(err => null);
+    const mod = await ModModel.create({ modID, name, assetsURL }).catch(err => null);
     if (mod == null) throw new ExpressError(400, 'Mod already exists');
     res.json({ status: "200", message: "Successfully added mod" });
 });
 
 modRoute.post('/:mod/edit', validateApiKey, async (req: Request, res: Response) => {
     const { mod } = req.params;
-    const { id, name, assetsURL } = req.body;
+    const { modID, name, assetsURL } = req.body;
 
-    const filtered = Object.entries({ id, name, assetsURL }).filter(([_, v]) => v != null);
+    const filtered = Object.entries({ modID, name, assetsURL }).filter(([_, v]) => v != null);
     const body = Object.fromEntries(filtered);
 
-    const updated = await ModModel.findOneAndUpdate({ id: mod }, { $set: body }, { new: false });
+    const updated = await ModModel.findOneAndUpdate({ modID: mod }, { $set: body }, { new: false });
     if (updated == null) throw new ExpressError(404, 'Mod does not exist');
     res.json({ status: "200", message: "Successfully updated mod" });
 });
@@ -67,35 +67,35 @@ modRoute.post('/:mod/pack', validateApiKey, (req: Request, res: Response) => {
 
 
 async function getAsset(req: Request, res: Response, hasPath: boolean) {
-    const { mod } = req.params;
+    const { mod: modID } = req.params;
 
     // Let's grab our path and see if it exists
     let path = hasPath ? posix.normalize(req.url) : "#index";
 
     // Skip lookup if cached beforehand
-    if (cache.has(mod) && cache.get(mod).has(path)) {
-        const { buffer, contentType, url: baseUrl } = cache.get(mod).get(path);
+    if (cache.has(modID) && cache.get(modID).has(path)) {
+        const { buffer, contentType } = cache.get(modID).get(path);
         
         // If we don't have the buffer, it was preloaded
         if (buffer != null) {
             res.header('Content-Type', contentType).end(buffer);
             return;
         }
-    } else if (!cache.has(mod)) {
+    } else if (!cache.has(modID)) {
         // If the mod hasn't been loaded, let's get it
-        const result: Mod = await ModModel.findOne({ id: mod });
+        const result: Mod = await ModModel.findOne({ modID });
         if (result == null) throw new ExpressError(404, 'Mod does not exist');
         else if (!result.assetsURL) throw new ExpressError(500, 'Mod\'s asset URL does not exist');
 
         // Let's not forget to add the mod lookup table
-        cache.set(mod, new Map());
+        cache.set(modID, new Map());
 
         // Let's preload this
-        cache.get(mod).set("#index", { buffer: null, contentType: null, url: result.assetsURL });
+        cache.get(modID).set("#index", { buffer: null, contentType: null, url: result.assetsURL });
     }
 
     // We try to keep the url "loaded" at all times
-    const { url: baseURL } = cache.get(mod).get('#index');
+    const { url: baseURL } = cache.get(modID).get('#index');
     const assetsURL = new URL(baseURL);
     const { pathname } = assetsURL;
 
@@ -118,10 +118,10 @@ async function getAsset(req: Request, res: Response, hasPath: boolean) {
     // Save to cache
     const buffer = Buffer.from(response.data);
     const contentType = response.headers['content-type'];
-    cache.get(mod).set(path, { buffer, contentType, url });
+    cache.get(modID).set(path, { buffer, contentType, url });
 
     // Save the preloaded path with our new information
-    if (!hasPath) cache.get(mod).set("#index", { buffer, contentType, url });
+    if (!hasPath) cache.get(modID).set("#index", { buffer, contentType, url });
 
     // Send the information to the client
     res.header('Content-Type', contentType).end(buffer);

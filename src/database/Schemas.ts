@@ -3,7 +3,7 @@ import { ApiKey, Mod } from "../types";
 import { v4 as UUIDv4 } from "uuid";
 
 const ModSchema = new Schema<Mod>({
-    id: { type: String, unique: true, required: true },
+    modID: { type: String, unique: true, required: true },
     name: { type: String, required: true },
     assetsURL: { type: String },
 }, getHideOptions());
