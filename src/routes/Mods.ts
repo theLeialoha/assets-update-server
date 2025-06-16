@@ -1,10 +1,11 @@
-import { NextFunction, Request, Response, Router } from "express";
 import { Cache, ExpirableMap, ExpressError, Mod } from "../types";
 import { default as axios } from "axios";
+import { ModModel } from "../database";
+import { NextFunction, Request, Response, Router } from "express";
 import { posix } from "path";
 import { URL } from "url";
-import { ModModel } from "../database";
 import { validateApiKey } from ".";
+const asyncHandler = require("express-async-handler");
 
 const cache = new ExpirableMap<string, Map<String, Cache>>();
 
@@ -15,40 +16,40 @@ modRoute.get('/', async (req: Request, res: Response) => {
     res.json(mods);
 });
 
-modRoute.get('/:mod/index.json', async (req: Request, res: Response) => {
+modRoute.get('/:mod/index.json', asyncHandler(async (req: Request, res: Response) => {
     getAsset(req, res, false);
-});
+}));
 
-modRoute.get('/:mod', async (req: Request, res: Response) => {
+modRoute.get('/:mod', asyncHandler(async (req: Request, res: Response) => {
     const { mod: modID } = req.params;
     const mod: Mod = await ModModel.findOne({ modID });
 
     if (mod == null) throw new ExpressError(404, 'Mod does not exist');
     res.json(mod);
-});
+}));
 
-modRoute.use('/:mod/', async (req: Request, res: Response, next: NextFunction) => {
+modRoute.use('/:mod/', asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
     if (req.method != 'GET') return next();
     getAsset(req, res, true);
-});
+}));
 
-modRoute.delete('/:mod', validateApiKey, async (req: Request, res: Response) => {
+modRoute.delete('/:mod', validateApiKey, asyncHandler(async (req: Request, res: Response) => {
     const { mod: modID } = req.params;
     const mod: Mod = await ModModel.findOneAndDelete({ modID });
 
     if (mod == null) throw new ExpressError(404, 'Mod does not exist');
     res.json({ status: "200", message: `Successfully deleted mod "${modID}"` })
-});
+}));
 
-modRoute.post('/add', validateApiKey, async (req: Request, res: Response, next: NextFunction) => {
+modRoute.post('/add', validateApiKey, asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
     const { modID, name, assetsURL } = req.body;
 
     const mod = await ModModel.create({ modID, name, assetsURL }).catch(err => null);
     if (mod == null) throw new ExpressError(400, 'Mod already exists');
     res.json({ status: "200", message: "Successfully added mod" });
-});
+}));
 
-modRoute.post('/:mod/edit', validateApiKey, async (req: Request, res: Response) => {
+modRoute.post('/:mod/edit', validateApiKey, asyncHandler(async (req: Request, res: Response) => {
     const { mod } = req.params;
     const { modID, name, assetsURL } = req.body;
 
@@ -58,7 +59,7 @@ modRoute.post('/:mod/edit', validateApiKey, async (req: Request, res: Response) 
     const updated = await ModModel.findOneAndUpdate({ modID: mod }, { $set: body }, { new: false });
     if (updated == null) throw new ExpressError(404, 'Mod does not exist');
     res.json({ status: "200", message: "Successfully updated mod" });
-});
+}));
 
 modRoute.post('/:mod/pack', validateApiKey, (req: Request, res: Response) => {
     throw new ExpressError(500, 'function not implmented');
